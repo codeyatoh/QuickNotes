@@ -1,0 +1,24 @@
+# Firebase Configuration for Android
+# Copy this content to your .env file in the root directory
+# Replace the values with your actual Firebase configuration
+
+FIREBASE_ANDROID_API_KEY=AIzaSyBO8zSsBfY0p5B4Vu61pqRw8NNhfKeccZk
+FIREBASE_ANDROID_APP_ID=1:777803115238:android:ad18adc9fca6d642986927
+FIREBASE_ANDROID_MESSAGING_SENDER_ID=777803115238
+FIREBASE_PROJECT_ID=quicknotes-f019d
+FIREBASE_STORAGE_BUCKET=quicknotes-f019d.firebasestorage.app
+
+# Optional: Web-specific values (will use Android values as fallback if not set)
+# FIREBASE_WEB_API_KEY=
+# FIREBASE_WEB_APP_ID=
+# FIREBASE_AUTH_DOMAIN=
+
+# Instructions:
+# 1. Create a file named .env (with the dot) in the root directory
+# 2. Copy the content above
+# 3. Make sure there are NO spaces around the = sign
+# 4. Make sure there are NO quotes around the values
+# 5. Save the file
+# 6. Run: flutter pub get
+# 7. Run: flutter run
+
