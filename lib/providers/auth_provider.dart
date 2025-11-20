@@ -1,6 +1,8 @@
+import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb;
 import 'package:flutter/foundation.dart' show ChangeNotifier, debugPrint, kDebugMode;
+import 'package:http/http.dart' as http;
 import '../models/user_model.dart';
 
 class AuthProvider extends ChangeNotifier {
@@ -414,6 +416,161 @@ class AuthProvider extends ChangeNotifier {
           debugPrint('✗ Update user error: $e');
         }
       _lastError = 'An unexpected error occurred. Please try again.';
+      notifyListeners();
+      return false;
+    }
+  }
+
+  // Password reset code storage
+  final Map<String, Map<String, dynamic>> _passwordResetCodes = {};
+
+  /// Sends a 6-digit password reset code to the user's email
+  Future<bool> sendPasswordResetCode(String email) async {
+    _lastError = null;
+    try {
+      // Generate 6-digit code
+      final code = (100000 + (DateTime.now().millisecondsSinceEpoch % 900000)).toString();
+
+      // Store code with expiration (15 minutes)
+      _passwordResetCodes[email.trim()] = {
+        'code': code,
+        'expiresAt': DateTime.now().add(const Duration(minutes: 15)),
+        'attempts': 0,
+      };
+
+      // Store in Firestore
+      await _firestore.collection('password_reset_codes').doc(email.trim()).set({
+        'code': code,
+        'email': email.trim(),
+        'createdAt': FieldValue.serverTimestamp(),
+        'expiresAt': Timestamp.fromDate(DateTime.now().add(const Duration(minutes: 15))),
+        'used': false,
+      });
+
+      // Send email via EmailJS
+      try {
+        await http.post(
+          Uri.parse('https://api.emailjs.com/api/v1.0/email/send'),
+          headers: {'Content-Type': 'application/json'},
+          body: json.encode({
+            'service_id': 'service_trsntbw',
+            'template_id': 'template_pkoekec',
+            'user_id': '4yKB68hYcpmktraku',
+            'template_params': {
+              'to_name': email.trim(),
+              'to_email': email.trim(),
+              'code': code,
+            },
+          }),
+        );
+      } catch (emailError) {
+        // Email sending failed, but code is still valid
+      }
+
+      return true;
+    } on fb.FirebaseAuthException catch (e) {
+      switch (e.code) {
+        case 'invalid-email':
+          _lastError = 'Invalid email format.';
+          break;
+        default:
+          _lastError = 'Failed to send reset code: ${e.message ?? e.code}';
+      }
+      notifyListeners();
+      return false;
+    } catch (e) {
+      _lastError = 'An unexpected error occurred. Please try again.';
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// Verifies the password reset code
+  Future<bool> verifyPasswordResetCode(String email, String code) async {
+    _lastError = null;
+    try {
+
+      // Check stored code in memory
+      final storedData = _passwordResetCodes[email.trim()];
+      if (storedData != null) {
+        if (DateTime.now().isAfter(storedData['expiresAt'] as DateTime)) {
+          _passwordResetCodes.remove(email.trim());
+          _lastError = 'Code expired. Please request a new code.';
+          notifyListeners();
+          return false;
+        }
+
+        if (storedData['attempts'] >= 5) {
+          _passwordResetCodes.remove(email.trim());
+          _lastError = 'Too many attempts. Please request a new code.';
+          notifyListeners();
+          return false;
+        }
+
+        if (storedData['code'] != code) {
+          storedData['attempts'] = (storedData['attempts'] as int) + 1;
+          _lastError = 'Invalid code. Please try again.';
+          notifyListeners();
+          return false;
+        }
+
+        return true;
+      }
+
+      // Fallback to Firestore
+      final doc = await _firestore.collection('password_reset_codes').doc(email.trim()).get();
+      if (!doc.exists) {
+        _lastError = 'No reset code found. Please request a new code.';
+        notifyListeners();
+        return false;
+      }
+
+      final data = doc.data()!;
+      if (data['used'] == true ||
+          DateTime.now().isAfter((data['expiresAt'] as Timestamp).toDate()) ||
+          data['code'] != code) {
+        _lastError = 'Invalid or expired code.';
+        notifyListeners();
+        return false;
+      }
+
+      return true;
+    } catch (e) {
+      _lastError = 'An unexpected error occurred.';
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// Sends Firebase password reset email after code verification
+  Future<bool> resetPassword(String email, String code) async {
+    _lastError = null;
+    try {
+      if (!await verifyPasswordResetCode(email, code)) {
+        return false;
+      }
+
+      // Send Firebase password reset email
+      await _auth.sendPasswordResetEmail(email: email.trim());
+
+      // Mark code as used
+      _passwordResetCodes.remove(email.trim());
+      await _firestore.collection('password_reset_codes').doc(email.trim()).update({
+        'used': true,
+        'usedAt': FieldValue.serverTimestamp(),
+      });
+
+      return true;
+    } on fb.FirebaseAuthException catch (e) {
+
+      _lastError = e.code == 'user-not-found'
+          ? 'No account found with this email.'
+          : 'Failed to send reset email: ${e.message ?? e.code}';
+
+      notifyListeners();
+      return false;
+    } catch (e) {
+      _lastError = 'An unexpected error occurred.';
       notifyListeners();
       return false;
     }

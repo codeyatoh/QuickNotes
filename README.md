@@ -12,6 +12,7 @@ A modern, cross-platform note-taking application built with Flutter and Firebase
 - 🔄 Real-time synchronization across devices
 - 📴 **Offline mode** - Create and edit notes without internet
 - 🔐 Secure authentication with Firebase
+- 🔑 **Password reset** - Forgot password flow with email verification
 - 📱 Cross-platform (Android, iOS, Web, Desktop)
 - ⚡ Optimized performance with instant UI updates
 - 🎯 Smart caching and memoization

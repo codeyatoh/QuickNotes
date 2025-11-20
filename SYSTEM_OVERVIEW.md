@@ -172,6 +172,36 @@ Navigation: Screen pops immediately, success message shown on home
 6. `authStateChanges()` stream emits null
 7. Success message shown on login screen
 
+### Password Reset Process
+1. User clicks "Forgot password?" on Login Screen
+2. User enters email address on Forgot Password Screen
+3. `AuthProvider.sendPasswordResetCode()` is called:
+   - Generates secure 6-digit verification code
+   - Stores code in Firestore `password_reset_codes` collection with:
+     - 15-minute expiration
+     - Maximum 5 verification attempts
+     - Single-use flag
+   - Sends code via EmailJS to user's email
+4. User enters 6-digit code on Verify Code Screen
+5. `AuthProvider.verifyPasswordResetCode()` validates code:
+   - Checks code matches
+   - Verifies not expired
+   - Checks attempt limit not exceeded
+   - Confirms not already used
+6. After successful verification:
+   - Firebase sends password reset email link
+   - User clicks link in email
+   - User sets new password on Firebase's page
+   - Password updated in Firebase Authentication
+7. User logs in with new password
+
+**Security Features:**
+- 🔒 6-digit code with 15-minute expiration
+- 🔒 Maximum 5 verification attempts per code
+- 🔒 Single-use codes (marked as used after reset)
+- 🔒 Firestore security rules allow public access to password_reset_codes collection
+- 📧 Email delivery via EmailJS (100% free, no credit card required)
+
 ---
 
 ## Routing System

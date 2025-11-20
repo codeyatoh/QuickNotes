@@ -13,6 +13,9 @@ import 'screens/splash_screen.dart';
 import 'screens/onboarding_screen.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
+import 'screens/auth/forgot_password_screen.dart';
+import 'screens/auth/verify_code_screen.dart';
+import 'screens/auth/reset_password_screen.dart';
 import 'screens/notes/home_screen.dart';
 import 'screens/notes/create_note_screen.dart';
 import 'screens/notes/edit_note_screen.dart';
@@ -220,6 +223,7 @@ class QuickNotesApp extends StatelessWidget {
               '/splash': (context) => const SplashScreen(),
               '/login': (context) => const LoginScreen(),
               '/register': (context) => const RegisterScreen(),
+              '/forgot-password': (context) => const ForgotPasswordScreen(),
               '/onboarding': (context) => const OnboardingScreen(),
               '/home': (context) => const HomeScreen(),
               '/create': (context) => const CreateNoteScreen(),
@@ -231,6 +235,27 @@ class QuickNotesApp extends StatelessWidget {
               // Handle routes with parameters
               final routeName = settings.name;
               if (routeName == null) return null;
+
+              // Handle /verify-code route with email parameter
+              if (routeName == '/verify-code') {
+                final email = settings.arguments as String;
+                return MaterialPageRoute(
+                  builder: (context) => VerifyCodeScreen(email: email),
+                  settings: settings,
+                );
+              }
+
+              // Handle /reset-password route with email and code parameters
+              if (routeName == '/reset-password') {
+                final args = settings.arguments as Map<String, String>;
+                return MaterialPageRoute(
+                  builder: (context) => ResetPasswordScreen(
+                    email: args['email']!,
+                    code: args['code']!,
+                  ),
+                  settings: settings,
+                );
+              }
 
               // Handle /note/:id routes
               if (routeName.startsWith('/note/')) {
