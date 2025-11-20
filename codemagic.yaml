@@ -7,6 +7,30 @@ workflows:
       xcode: latest
       cocoapods: default
     scripts:
+      - name: Create .env file
+        script: |
+          cat > .env << EOF
+          # Firebase Configuration
+          FIREBASE_ANDROID_API_KEY=
+          FIREBASE_ANDROID_APP_ID=
+          FIREBASE_ANDROID_MESSAGING_SENDER_ID=
+          FIREBASE_IOS_API_KEY=
+          FIREBASE_IOS_APP_ID=
+          FIREBASE_IOS_BUNDLE_ID=
+          FIREBASE_MACOS_API_KEY=
+          FIREBASE_MACOS_APP_ID=
+          FIREBASE_MACOS_BUNDLE_ID=
+          FIREBASE_WINDOWS_API_KEY=
+          FIREBASE_WINDOWS_APP_ID=
+          FIREBASE_LINUX_API_KEY=
+          FIREBASE_LINUX_APP_ID=
+          FIREBASE_WEB_API_KEY=
+          FIREBASE_WEB_APP_ID=
+          FIREBASE_AUTH_DOMAIN=
+          FIREBASE_MEASUREMENT_ID=
+          FIREBASE_PROJECT_ID=
+          FIREBASE_STORAGE_BUCKET=
+          EOF
       - name: Get Flutter packages
         script: |
           flutter packages pub get
