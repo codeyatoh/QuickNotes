@@ -13,6 +13,9 @@ workflows:
       - name: Build APK with Flutter
         script: |
           flutter build apk --release
+      - name: Rename APK file
+        script: |
+          mv build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/Halmain-Angelito-QuickNotes.apk
     artifacts:
       - build/app/outputs/flutter-apk/*.apk
     publishing:
